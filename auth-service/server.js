@@ -7,6 +7,8 @@ const db = require('./config/db');
 const authRoutes = require('./routes/auth');
 const skillsRoutes = require('./routes/skills');
 const matchesRoutes = require('./routes/matches');
+const chatRoutes = require('./routes/chat');
+const Message = require('./models/Message');
 
 dotenv.config();
 
@@ -27,6 +29,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/skills', skillsRoutes);
 app.use('/api/matches', matchesRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Test route
 app.get('/', (req, res) => {
@@ -46,6 +49,38 @@ io.on('connection', (socket) => {
     console.log(`User ${user_id} is online`);
   });
 
+  // Join a chat room
+  socket.on('join_room', (match_id) => {
+    socket.join(match_id);
+    console.log(`User joined chat room: ${match_id}`);
+  });
+
+  // Send message
+  socket.on('send_message', async ({ match_id, sender_id, sender_name, message }) => {
+    try {
+      // Save message to MongoDB
+      const newMessage = new Message({
+        chat_room_id: match_id,
+        sender_id,
+        sender_name,
+        message
+      });
+      await newMessage.save();
+
+      // Send message to everyone in the room
+      io.to(match_id).emit('receive_message', {
+        sender_id,
+        sender_name,
+        message,
+        created_at: new Date()
+      });
+
+      console.log(`Message from ${sender_name}: ${message}`);
+    } catch (err) {
+      console.error('Message save failed:', err.message);
+    }
+  });
+
   // Send swap request notification
   socket.on('send_request', ({ to_user_id, from_user_name }) => {
     const receiverSocket = onlineUsers[to_user_id];
@@ -57,7 +92,6 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    // Remove user from online users
     Object.keys(onlineUsers).forEach(key => {
       if (onlineUsers[key] === socket.id) {
         delete onlineUsers[key];
