@@ -88,6 +88,9 @@ function Dashboard() {
           <span style={styles.welcomeText}>
             Welcome, {user?.name}! 👋
           </span>
+            <button style={styles.navBtn} onClick={() => navigate('/requests')}>
+                📩 Requests
+            </button>
           <button style={styles.logoutBtn} onClick={handleLogout}>
             Logout
           </button>
@@ -279,7 +282,7 @@ const styles = {
     margin: '3px 0',
     color: '#666'
   },
-  requestBtn: {
+requestBtn: {
     padding: '10px 20px',
     backgroundColor: '#10b981',
     color: 'white',
@@ -287,7 +290,16 @@ const styles = {
     borderRadius: '8px',
     cursor: 'pointer',
     fontSize: '14px'
-  }
+  },
+  navBtn: {
+    padding: '8px 16px',
+    backgroundColor: '#10b981',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontWeight: 'bold'
+  },
 };
 
 export default Dashboard;
